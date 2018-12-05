@@ -1,0 +1,95 @@
+#!/bin/bash
+intHDD=$( lsblk|grep SWAP|cut -c 7,8,9 )
+while ! [[ $Source =~ ^sd[a-z]$ ]]
+do
+	clear
+	echo "Clone/Copy HDD/SSD/USB etc."
+	echo ""
+	lsblk -b|grep -v $intHDD|grep -v sr0
+	echo ""
+	echo "Please Enter a SOURCE device choice from the above list (sdb, sdc, sdd etc.): "
+	read Source
+done
+if [[ $Source = $intHDD ]]
+then
+	echo ""
+	echo "You have chosen the internal HDD.  Aborting..."
+	exit 1
+fi
+if [[ $( lsblk|grep $Source ) = '' ]]
+then
+	echo ""
+	echo "No block device '$Source' found.  Aborting..."
+	exit 1
+fi
+while ! [[ $Target =~ ^sd[a-z]$ ]]
+do
+	echo ""
+	lsblk -b|grep -v $intHDD|grep -v sr0|grep -v $Source
+	echo ""
+	echo "Please Enter a TARGET device choice from the above list (sdb, sdc, sdd etc.): "
+	read Target
+done
+if [[ $Target = $intHDD ]]
+then
+	echo ""
+	echo "You have chosen the internal HDD.  Aborting..."
+	exit 1
+fi
+if [[ $( lsblk|grep $Target ) = '' ]]
+then
+	echo ""
+	echo "No block device '$Target' found.  Aborting..."
+	exit 1
+fi
+if [[ $Source = $Target ]]
+then
+	echo ""
+	echo "SOURCE and TARGET can't be the same device.  Aborting..."
+	exit 1
+fi
+SourceSize=$( blockdev --getsize64 /dev/$Source )
+TargetSize=$( blockdev --getsize64 /dev/$Target )
+if [[ $SourceSize > $TargetSize ]]
+then
+	while ! [[ $Sure =~ ^[yYnN]$ ]]
+	do
+		echo ""
+		echo "TARGET ($Target, $TargetSize bytes) is smaller than SOURCE ($Source, $SourceSize bytes)."
+		read -p "Are you sure you want to continue? (y/n): " Sure
+	done
+	if [[ $Sure =~ ^[nN]$ ]]
+	then	
+		echo ""
+		echo "Aborting because TARGET is smaller than SOURCE..."
+		exit 1
+	fi
+fi
+while ! [[ $verify =~ ^[yYnN]$ ]]
+do
+	echo ""
+	read -p "Do you wish to verify the data has been copied correctly? (y/n): " verify
+done
+if [[ $SourceSize > $TargetSize ]]
+then
+	dc3dd if=/dev/$Source of=/dev/$Target cnt=$( blockdev --getsz /dev/$Target )
+else
+	dc3dd if=/dev/$Source of=/dev/$Target
+fi
+if [[ $verify =~ ^[nN]$ ]]
+then
+	echo "Not verifying..."
+	exit 0
+else
+	echo "Verifying..."
+	echo ""
+	verified=$(pv /dev/$Source|cmp - /dev/$Target 2>&1|grep -v EOF|cut -f 4,5 -d ' '|cut -d ',' -f 1 )
+	echo ""
+	if [[ $verified = '' ]]
+	then
+		echo "$Source has been correctly copied to $Target..."
+	else
+		echo "$Target has not copied correctly from $Source; $verified is different !"
+		exit 1
+	fi
+fi
