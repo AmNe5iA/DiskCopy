@@ -49,7 +49,9 @@ then
 	exit 1
 fi
 SourceSize=$( blockdev --getsize64 /dev/$Source )
+SourceSectors=$( blockdev --getsz /dev/$Source )
 TargetSize=$( blockdev --getsize64 /dev/$Target )
+TargetSectors=$( blockdev --getsz /dev/$Target )
 if [[ $SourceSize > $TargetSize ]]
 then
 	while ! [[ $Sure =~ ^[yYnN]$ ]]
@@ -72,12 +74,12 @@ do
 done
 if [[ $SourceSize > $TargetSize ]]
 then
-	dc3dd if=/dev/$Source of=/dev/$Target cnt=$( blockdev --getsz /dev/$Target )
+	dc3dd if=/dev/$Source of=/dev/$Target cnt=$TargetSectors
 elif [[ $TargetSize > $SourceSize ]]
 then
 	dc3dd if=/dev/$Source of=/dev/$Target
 	echo "Zeroing the remainder of $Target..."
-	dc3dd wipe=/dev/$Target oskip=$( blockdev --getsz /dev/$Source )
+	dc3dd if=/dev/zero of=/dev/$Target oskip=$SourceSectors cnt=$(( $TargetSectors - $SourceSectors ))
 else
 	dc3dd if=/dev/$Source of=/dev/$Target
 fi
