@@ -73,6 +73,11 @@ done
 if [[ $SourceSize > $TargetSize ]]
 then
 	dc3dd if=/dev/$Source of=/dev/$Target cnt=$( blockdev --getsz /dev/$Target )
+elif [[ $TargetSize > $SourceSize ]]
+then
+	dc3dd if=/dev/$Source of=/dev/$Target
+	echo "Zeroing the remainder of $Target..."
+	dc3dd wipe=/dev/$Target oskip=$( blockdev --getsz /dev/$Source )
 else
 	dc3dd if=/dev/$Source of=/dev/$Target
 fi
