@@ -52,7 +52,7 @@ SourceSize=$( blockdev --getsize64 /dev/$Source )
 SourceSectors=$( blockdev --getsz /dev/$Source )
 TargetSize=$( blockdev --getsize64 /dev/$Target )
 TargetSectors=$( blockdev --getsz /dev/$Target )
-if [[ $SourceSectors > $TargetSectors ]]
+if [[ $SourceSectors -gt $TargetSectors ]]
 then
 	while ! [[ $Sure =~ ^[yYnN]$ ]]
 	do
@@ -72,10 +72,10 @@ do
 	echo ""
 	read -p "Do you wish to verify the data has been copied correctly? (y/n): " verify
 done
-if [[ $SourceSectors > $TargetSectors ]]
+if [[ $SourceSectors -gt $TargetSectors ]]
 then
 	dc3dd if=/dev/$Source of=/dev/$Target cnt=$TargetSectors
-elif [[ $TargetSectors > $SourceSectors ]]
+elif [[ $TargetSectors -gt $SourceSectors ]]
 then
 	dc3dd if=/dev/$Source of=/dev/$Target
 	echo "Zeroing the remainder of $Target..."
