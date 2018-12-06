@@ -78,7 +78,7 @@ then
 elif [[ $TargetSectors -gt $SourceSectors ]]
 then
 	dc3dd if=/dev/$Source of=/dev/$Target
-	echo "Zeroing the remainder of $Target..."
+	echo -e "\e[1;33mZeroing the remainder of $Target...\e[0m"
 	dc3dd if=/dev/zero of=/dev/$Target oskip=$SourceSectors cnt=$(( $TargetSectors - $SourceSectors ))
 else
 	dc3dd if=/dev/$Source of=/dev/$Target
@@ -90,7 +90,12 @@ then
 else
 	echo "Verifying..."
 	echo ""
-	verified=$(pv /dev/$Source|cmp - /dev/$Target 2>&1|grep -v EOF|cut -f 4,5 -d ' '|cut -d ',' -f 1 )
+	if [[ $SourceSectors -gt $TargetSectors ]]
+	then
+		verified=$(pv /dev/$Target|cmp - /dev/$Source 2>&1|grep -v EOF|cut -f 4,5 -d ' '|cut -d ',' -f 1 )
+	else
+		verified=$(pv /dev/$Source|cmp - /dev/$Target 2>&1|grep -v EOF|cut -f 4,5 -d ' '|cut -d ',' -f 1 )
+	fi
 	echo ""
 	if [[ $verified = '' ]]
 	then
