@@ -29,6 +29,12 @@ then
 	echo "No block device '$Source' found.  Aborting..."
 	exit 1
 fi
+if [[ $( lsblk|grep -v $intHDD|grep -v $Source|grep -v sr0|grep -v NAME ) = '' ]]
+then
+	echo ""	
+	echo "No other block device (TARGET) found.  Aborting..."
+	exit 1
+fi
 while ! [[ $Target =~ ^sd[a-z]$ ]]
 do
 	echo ""
