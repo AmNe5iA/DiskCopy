@@ -85,6 +85,9 @@ do
 	echo ""
 	read -p "Do you wish to verify the data has been copied correctly? (y/n): " verify
 done
+blockdev --setro /dev/$Source*
+echo ""
+echo "$Source has been set to read-only access."
 if [[ $SourceSectors -gt $TargetSectors ]]
 then
 	dc3dd if=/dev/$Source of=/dev/$Target cnt=$TargetSectors
